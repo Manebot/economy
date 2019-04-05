@@ -1,0 +1,48 @@
+image: maven
+
+variables:
+  MAVEN_CLI_OPTS: "-s .m2/settings.xml --batch-mode"
+  MAVEN_OPTS: "-Dhttps.protocols=TLSv1.1,TLSv1.2 -Dmaven.repo.local=.m2/repository"
+
+cache:
+  key: ${CI_COMMIT_REF_SLUG}
+  paths:
+    - .m2/repository/
+    - target/
+    
+stages:
+  - build
+  - test
+  - package 
+  - deploy
+
+codebuild:
+  tags:
+    - maven
+  stage: build
+  script: 
+    - mvn compile
+
+codetest:
+  tags:
+    - maven
+  stage: test
+  script:
+    - mvn $MAVEN_CLI_OPTS test
+
+codepackage:
+  tags:
+    - maven
+  stage: package
+  script:
+    - mvn $MAVEN_CLI_OPTS package -Dmaven.test.skip=true
+  artifacts:
+    paths:
+      - target/*.war 
+
+codedeploy:
+  tags:
+    - maven
+  stage: deploy
+  script:
+    - mvn $MAVEN_CLI_OPTS deploy -Dmaven.test.skip=true
