@@ -71,11 +71,11 @@ public class Economy implements PluginReference {
                     Balance.class
             ).setMaxResults(max)
                     .getResultStream()
-                    .map(Balance::getBalance);
-        })
-                .map(bd -> new BigDecimal[]{bd, BigDecimal.ONE})
-                .reduce((a, b) -> new BigDecimal[]{a[0].add(b[0]), a[1].add(BigDecimal.ONE)})
-                .orElse(new BigDecimal[]{ BigDecimal.ZERO, BigDecimal.ZERO });
+                    .map(Balance::getBalance)
+                    .map(bd -> new BigDecimal[]{bd, BigDecimal.ONE})
+                    .reduce((a, b) -> new BigDecimal[]{a[0].add(b[0]), a[1].add(BigDecimal.ONE)})
+                    .orElse(new BigDecimal[]{ BigDecimal.ZERO, BigDecimal.ZERO });
+        });
 
         if (totalWithCount[1].equals(BigDecimal.ZERO)) return BigDecimal.ZERO;
         else return totalWithCount[0].divide(totalWithCount[1], RoundingMode.HALF_EVEN);
