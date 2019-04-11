@@ -8,6 +8,8 @@ import io.manebot.plugin.economy.database.model.Balance;
 import io.manebot.plugin.economy.database.model.Transaction;
 import io.manebot.user.User;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.sql.SQLException;
 
 import java.text.NumberFormat;
@@ -53,6 +55,30 @@ public class Economy implements PluginReference {
                             .collect(Collectors.toList())
             ).setMaxResults(max).getResultList();
         });
+    }
+
+    public BigDecimal getAverageTopBalance(int max) {
+        if (!enabled) throw  new IllegalStateException("Plugin is not enabled.");
+
+        // https://stackoverflow.com/questions/31881561/how-to-average-bigdecimals-using-streams
+
+        BigDecimal[] totalWithCount = database.execute(s -> {
+            return s.createQuery(
+                    "SELECT x FROM " + Balance.class.getName() + " x " +
+                            "inner join x.user u " +
+                            "WHERE x.balance >= 0.01 " +
+                            "ORDER BY x.balance DESC",
+                    Balance.class
+            ).setMaxResults(max)
+                    .getResultStream()
+                    .map(Balance::getBalance);
+        })
+                .map(bd -> new BigDecimal[]{bd, BigDecimal.ONE})
+                .reduce((a, b) -> new BigDecimal[]{a[0].add(b[0]), a[1].add(BigDecimal.ONE)})
+                .orElse(new BigDecimal[]{ BigDecimal.ZERO, BigDecimal.ZERO });
+
+        if (totalWithCount[1].equals(BigDecimal.ZERO)) return BigDecimal.ZERO;
+        else return totalWithCount[0].divide(totalWithCount[1], RoundingMode.HALF_EVEN);
     }
 
     public Balance getAccount(User user) {
