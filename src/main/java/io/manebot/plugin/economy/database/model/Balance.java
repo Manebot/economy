@@ -84,6 +84,10 @@ public class Balance extends TimedRow {
         }
     }
 
+    public Transaction add(double net, String reason) {
+        return add(BigDecimal.valueOf(net), reason);
+    }
+
     public Transaction add(BigDecimal net, String reason) {
         return setBalance(balance.add(net), reason);
     }
