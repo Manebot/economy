@@ -1,12 +1,17 @@
 package io.manebot.plugin.economy.command;
 
+import io.manebot.chat.Chat;
+import io.manebot.chat.ChatSender;
 import io.manebot.command.CommandSender;
 import io.manebot.command.exception.CommandArgumentException;
 import io.manebot.command.exception.CommandExecutionException;
 import io.manebot.command.executor.chained.AnnotatedCommandExecutor;
 import io.manebot.command.executor.chained.argument.CommandArgumentNumeric;
 import io.manebot.command.executor.chained.argument.CommandArgumentString;
+import io.manebot.conversation.Conversation;
 import io.manebot.event.EventExecutionException;
+import io.manebot.platform.Platform;
+import io.manebot.platform.PlatformUser;
 import io.manebot.plugin.economy.Economy;
 import io.manebot.plugin.economy.database.model.Balance;
 import io.manebot.plugin.economy.event.UserPaidEvent;
@@ -15,6 +20,7 @@ import io.manebot.security.Grant;
 import io.manebot.user.User;
 
 import java.math.BigDecimal;
+import java.util.logging.Level;
 
 public class PayCommand extends AnnotatedCommandExecutor {
     private final Economy economy;
@@ -84,6 +90,25 @@ public class PayCommand extends AnnotatedCommandExecutor {
         } catch (EventExecutionException e) {
             throw new CommandExecutionException(e);
         }
+
+        otherUser.getAssociations(sender.getChat().getPlatform()).forEach(association -> {
+            PlatformUser platformUser;
+            try {
+                platformUser = association.getPlatformUser();
+            } catch (IllegalArgumentException ex) {
+                // User not found
+                economy.getPlugin().getLogger().log(Level.WARNING, "Problem sending private message to user", ex);
+                return;
+            }
+            if (platformUser == null) return;
+            Chat privateChat = platformUser.getPrivateChat();
+            if (privateChat == null || !privateChat.isConnected()) return;
+            Conversation conversation =
+                    economy.getPlugin().getBot().getConversationProvider().getConversationByChat(privateChat);
+            CommandSender pmSender = otherUser.createSender(conversation, association.getPlatformUser());
+            pmSender.sendMessage(sender.getUser().getDisplayName() + " paid you " + economy.format(amount) + ".");
+            pmSender.flush();
+        });
     }
 
     @Override
