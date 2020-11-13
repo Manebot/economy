@@ -49,7 +49,7 @@ public class Economy implements PluginReference {
                     Balance.class
             ).setParameter(
                     "id",
-                    conversation.getChat().getUsers().stream()
+                    conversation.getChat().getCommunity().getUsers().stream()
                             .map(x -> (io.manebot.database.model.User) x)
                             .map(io.manebot.database.model.User::getUserId)
                             .collect(Collectors.toList())
