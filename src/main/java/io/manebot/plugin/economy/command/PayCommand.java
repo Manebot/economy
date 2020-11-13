@@ -98,24 +98,8 @@ public class PayCommand extends AnnotatedCommandExecutor {
             throw new CommandExecutionException(e);
         }
 
-        otherUser.getAssociations(sender.getChat().getPlatform()).forEach(association -> {
-            PlatformUser platformUser;
-            try {
-                platformUser = association.getPlatformUser();
-            } catch (IllegalArgumentException ex) {
-                // User not found
-                economy.getPlugin().getLogger().log(Level.WARNING, "Problem sending private message to user", ex);
-                return;
-            }
-            if (platformUser == null) return;
-            Chat privateChat = platformUser.getPrivateChat();
-            if (privateChat == null || !privateChat.isConnected()) return;
-            Conversation conversation =
-                    economy.getPlugin().getBot().getConversationProvider().getConversationByChat(privateChat);
-            CommandSender pmSender = otherUser.createSender(conversation, association.getPlatformUser());
-            pmSender.sendMessage(sender.getUser().getDisplayName() + " paid you " + economy.format(amount) + ".");
-            pmSender.flush();
-        });
+        otherUser.broadcastMessage(broadcast ->
+                broadcast.sendMessage(sender.getUser().getDisplayName() + " paid you " + economy.format(amount) + "."));
     }
 
     @Override
