@@ -2,7 +2,9 @@ package io.manebot.plugin.economy.command;
 
 import io.manebot.chat.Chat;
 import io.manebot.chat.ChatSender;
+import io.manebot.chat.Community;
 import io.manebot.command.CommandSender;
+import io.manebot.command.exception.CommandAccessException;
 import io.manebot.command.exception.CommandArgumentException;
 import io.manebot.command.exception.CommandExecutionException;
 import io.manebot.command.executor.chained.AnnotatedCommandExecutor;
@@ -51,6 +53,11 @@ public class PayCommand extends AnnotatedCommandExecutor {
         Balance otherBalance = economy.getAccount(otherUser);
         if (otherBalance.isFrozen())
             throw new CommandArgumentException(otherUser.getDisplayName() + "'s account is frozen.");
+
+        Community community = sender.getChat().getCommunity();
+        if (community != null && community.isMember(otherUser)) {
+            throw new CommandAccessException(otherUser.getDisplayName() + " is not a member of this community.");
+        }
 
         double totalBalance = balance.getBalance().doubleValue();
 

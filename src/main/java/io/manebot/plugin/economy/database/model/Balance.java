@@ -1,9 +1,9 @@
 package io.manebot.plugin.economy.database.model;
 
 import io.manebot.database.Database;
-import io.manebot.database.model.Conversation;
 import io.manebot.database.model.TimedRow;
 import io.manebot.database.model.User;
+import io.manebot.plugin.economy.event.BalanceTransactionEvent;
 
 import javax.persistence.*;
 import java.math.BigDecimal;
@@ -61,7 +61,7 @@ public class Balance extends TimedRow {
 
     public Transaction setBalance(BigDecimal newBalance, String reason) {
         try {
-            return database.executeTransaction(s -> {
+            Transaction finalTransaction = database.executeTransaction(s -> {
                 Balance account = s.find(Balance.class, getId());
 
                 Transaction transaction = new Transaction(
@@ -79,6 +79,11 @@ public class Balance extends TimedRow {
 
                 return transaction;
             });
+
+            database.getDatabaseManager().getBot().getEventDispatcher().executeAsync(new BalanceTransactionEvent(
+                    this, this, finalTransaction));
+
+            return finalTransaction;
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
