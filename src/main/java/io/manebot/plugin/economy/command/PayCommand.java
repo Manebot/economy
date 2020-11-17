@@ -55,7 +55,7 @@ public class PayCommand extends AnnotatedCommandExecutor {
             throw new CommandArgumentException(otherUser.getDisplayName() + "'s account is frozen.");
 
         Community community = sender.getCommunity();
-        if (community != null && community.isMember(otherUser)) {
+        if (community != null && !community.isMember(otherUser)) {
             throw new CommandAccessException(otherUser.getDisplayName() + " is not a member of this community.");
         }
 
